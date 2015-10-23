@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "system",
+    "target": "ES5",
+    "outDir": "./bin-debug"
+  },
+  "exclude": [
+    "bin-debug",
+    "template"
+  ]
+}

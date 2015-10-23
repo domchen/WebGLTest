@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Hello World</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="full-screen" content="true"/>
+    <meta name="screen-orientation" content="portrait"/>
+    <meta name="x5-fullscreen" content="true"/>
+    <meta name="360-fullscreen" content="true"/>
+    <style>
+        html, body {
+            -ms-touch-action: none;
+            background: #888888;
+            padding: 0;
+            border: 0;
+            margin: 0;
+            height: 100%;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif
+        }
+    </style>
+
+    <!--这个标签会被替换为项目中所有的 javascript 文件-->
+    <script src="bin-debug/utils/GL.js"></script>
+    <script src="bin-debug/utils/Http.js"></script>
+    <script src="bin-debug/Main.js"></script>
+    <script src="bin-debug/web/WebEntry.js"></script>
+</head>
+
+<body>
+<div style="margin: auto; width: 100%; height: 100%; overflow: hidden; position: relative;" >
+    <canvas id="playerArea" height="800" width="480" style="cursor: default; position: absolute; top: 0px; bottom: 0px;
+    left: 0px; right: 0px; margin:auto;"></canvas>
+</div>
+</body>
+</html>
