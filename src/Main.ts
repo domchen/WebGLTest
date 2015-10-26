@@ -40,6 +40,7 @@ class Main {
     private init(canvas:HTMLCanvasElement):void{
         this.horizAspect = canvas.width/canvas.height;
         gl = GL.initWebGL(canvas);
+        gl.viewport(0,0,800,800)
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
@@ -51,6 +52,7 @@ class Main {
         var vertexShader = GL.createShader(gl,gl.VERTEX_SHADER,textList[0]);
         var fragmentShader = GL.createShader(gl,gl.FRAGMENT_SHADER,textList[1]);
 
+        //初始化着色器
         var shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram,vertexShader);
         gl.attachShader(shaderProgram,fragmentShader);
@@ -59,9 +61,31 @@ class Main {
             console.log("Unable to initialize the shader program.");
         }
         gl.useProgram(shaderProgram);
+
+        var a_Position = gl.getAttribLocation(shaderProgram,"a_Position");
+        if(a_Position<0){
+            console.log("Failed to get the storage location of a_Position");
+            return;
+        }
+
+
         gl.clearColor(0.0,0.0,0.0,1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.POINTS,0,1);
+
+        var vertices = new Float32Array([
+            -0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5
+        ]);
+        var vertexBuffer = gl.createBuffer();
+        if(!vertexBuffer){
+            console.log('failed to creae the buffer object!');
+            return;
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
+        gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0);
+        gl.enableVertexAttribArray(a_Position);
+
+        gl.drawArrays(gl.TRIANGLE_FAN,0,4);
     }
 
 
