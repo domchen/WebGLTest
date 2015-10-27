@@ -62,13 +62,7 @@ class Main {
         }
         gl.useProgram(shaderProgram);
 
-        var a_Position = gl.getAttribLocation(shaderProgram,"a_Position");
-        if(a_Position<0){
-            console.log("Failed to get the storage location of a_Position");
-            return;
-        }
         var matrix = new Matrix4();
-        matrix.rotate(45,0,0,1)
         var u_xformMatrix = gl.getUniformLocation(shaderProgram,"u_xformMatrix");
         gl.uniformMatrix4fv(u_xformMatrix,false,matrix.data);
 
@@ -77,7 +71,10 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         var vertices = new Float32Array([
-            -0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5
+            -0.5,0.5,1.0,0.0,0.0,
+            -0.5,-0.5,0.0,1.0,0.0,
+            0.5,0.5,0.0,0.0,1.0,
+            0.5,-0.5,0.0,0.5,1.0
         ]);
         var vertexBuffer = gl.createBuffer();
         if(!vertexBuffer){
@@ -86,8 +83,14 @@ class Main {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
-        gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0);
+        var size = vertices.BYTES_PER_ELEMENT;
+        var a_Position = gl.getAttribLocation(shaderProgram,"a_Position");
+        gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,size*5,0);
         gl.enableVertexAttribArray(a_Position);
+
+        var a_Color = gl.getAttribLocation(shaderProgram,"a_Color");
+        gl.vertexAttribPointer(a_Color,3,gl.FLOAT,false,size*5,size*2);
+        gl.enableVertexAttribArray(a_Color);
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }

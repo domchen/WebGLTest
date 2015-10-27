@@ -44,7 +44,7 @@ class GL {
         gl.shaderSource(shader,source);
         gl.compileShader(shader);
         if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
-            console.log("An error occurred compiling the shaders: "+ gl.getShaderInfoLog(shader));
+            console.log(": An error occurred compiling the shaders: "+ gl.getShaderInfoLog(shader)+"\n"+source);
             return null;
         }
         return shader;
