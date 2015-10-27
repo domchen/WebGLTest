@@ -27,7 +27,55 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
+var extensionMap:any = {};
+extensionMap["glsl"] = "text";
+extensionMap["vert"] = "text";
+extensionMap["frag"] = "text";
+extensionMap["jpg"] = "image";
+extensionMap["png"] = "image";
+extensionMap["gif"] = "image";
+
 class Http {
+
+    public static loadAll(urls:string[],callBack:(resultList:any[])=>void,thisObject:any):void{
+
+        var resultList:any[] = [];
+
+        function next():void{
+            if(urls.length==0){
+                complete();
+                return;
+            }
+            var url = urls.shift();
+            var index = url.lastIndexOf(".");
+            var type = "text";
+            if(index!=-1){
+                var ext = url.substring(index+1).toLowerCase();
+                type = extensionMap[ext];
+            }
+            switch(type){
+                case "image":
+                    Http.loadImage(url,(image:HTMLImageElement)=>{
+                        resultList.push(image);
+                        next();
+                    },null);
+                    break;
+                default :
+                    Http.loadText(url,(text:string)=>{
+                        resultList.push(text);
+                        next();
+                    },null);
+                    break;
+            }
+
+        }
+
+        function complete():void{
+            callBack.call(thisObject,resultList);
+        }
+
+        next();
+    }
 
     public static loadText(url:string, callBack:(text:string)=>void, thisObject:any):void {
         var xhr = new XMLHttpRequest();
@@ -66,6 +114,43 @@ class Http {
 
         function complete():void{
             callBack.call(thisObject,textList);
+        }
+
+        next();
+    }
+
+    public static loadImage(url:string,callBack:(image:HTMLImageElement)=>void,thisObject:any):void{
+        var image:HTMLImageElement = new Image();
+        image.onload = function(){
+            image.onload = null;
+            image.onerror = null;
+            callBack.call(thisObject,image);
+        };
+        image.onerror = function(){
+            image.onload = null;
+            image.onerror = null;
+            callBack.call(thisObject,null);
+        };
+        image.src = url;
+    }
+
+    public static loadImages(urls:string[],callBack:(imageList:HTMLImageElement[])=>void,thisObject:any):void{
+        var imageList:HTMLImageElement[] = [];
+
+        function next():void{
+            if(urls.length==0){
+                complete();
+                return;
+            }
+            var url = urls.shift();
+            Http.loadImage(url,(image:HTMLImageElement)=>{
+                imageList.push(image);
+                next();
+            },null);
+        }
+
+        function complete():void{
+            callBack.call(thisObject,imageList);
         }
 
         next();

@@ -45,12 +45,13 @@ class Main {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-        Http.loadTexts(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl"],this.initShaders,this);
+        Http.loadAll(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl","resource/test.png"],this.initShaders,this);
     }
 
-    private initShaders(textList:string[]):void{
-        var vertexShader = GL.createShader(gl,gl.VERTEX_SHADER,textList[0]);
-        var fragmentShader = GL.createShader(gl,gl.FRAGMENT_SHADER,textList[1]);
+    private initShaders(resultList:any[]):void{
+        var vertexShader = GL.createShader(gl,gl.VERTEX_SHADER,resultList[0]);
+        var fragmentShader = GL.createShader(gl,gl.FRAGMENT_SHADER,resultList[1]);
+        var image:HTMLImageElement = resultList[2];
 
         //初始化着色器
         var shaderProgram = gl.createProgram();
@@ -63,6 +64,7 @@ class Main {
         gl.useProgram(shaderProgram);
 
         var matrix = new Matrix4();
+        matrix.rotate(45,0,0,-1);
         var u_xformMatrix = gl.getUniformLocation(shaderProgram,"u_xformMatrix");
         gl.uniformMatrix4fv(u_xformMatrix,false,matrix.data);
 
@@ -93,6 +95,7 @@ class Main {
         gl.enableVertexAttribArray(a_Color);
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
     }
 
 
