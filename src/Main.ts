@@ -45,14 +45,13 @@ class Main {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-        Http.loadAll(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl","resource/test.png"],this.initShaders,this);
+        Http.loadAll(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl","resource/sky.jpg"],this.initShaders,this);
     }
 
     private initShaders(resultList:any[]):void{
         var vertexShader = GL.createShader(gl,gl.VERTEX_SHADER,resultList[0]);
         var fragmentShader = GL.createShader(gl,gl.FRAGMENT_SHADER,resultList[1]);
         var image:HTMLImageElement = resultList[2];
-
         //初始化着色器
         var shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram,vertexShader);
@@ -73,26 +72,39 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         var vertices = new Float32Array([
-            -0.5,0.5,1.0,0.0,0.0,
-            -0.5,-0.5,0.0,1.0,0.0,
-            0.5,0.5,0.0,0.0,1.0,
-            0.5,-0.5,0.0,0.5,1.0
+            -0.5,0.5,0.0,1.0,
+            -0.5,-0.5,0.0,0.0,
+            0.5,0.5,1.0,1.0,
+            0.5,-0.5,1.0,0.0
         ]);
         var vertexBuffer = gl.createBuffer();
         if(!vertexBuffer){
-            console.log('failed to creae the buffer object!');
+            console.log('failed to create the buffer object!');
             return;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
         var size = vertices.BYTES_PER_ELEMENT;
         var a_Position = gl.getAttribLocation(shaderProgram,"a_Position");
-        gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,size*5,0);
+        gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,size*4,0);
         gl.enableVertexAttribArray(a_Position);
 
-        var a_Color = gl.getAttribLocation(shaderProgram,"a_Color");
-        gl.vertexAttribPointer(a_Color,3,gl.FLOAT,false,size*5,size*2);
-        gl.enableVertexAttribArray(a_Color);
+        var a_TexCoord = gl.getAttribLocation(shaderProgram,"a_TexCoord");
+        gl.vertexAttribPointer(a_TexCoord,2,gl.FLOAT,false,size*4,size*2);
+        gl.enableVertexAttribArray(a_TexCoord);
+
+        var texture = gl.createTexture();
+        if(!texture){
+            console.log("failed to create the texture object!")
+            return;
+        }
+        var u_Sampler = gl.getUniformLocation(shaderProgram,"u_Sampler");
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D,texture);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,image);
+        gl.uniform1i(u_Sampler,0);
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 
