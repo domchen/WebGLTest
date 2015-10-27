@@ -67,6 +67,10 @@ class Main {
             console.log("Failed to get the storage location of a_Position");
             return;
         }
+        var matrix = new Matrix4();
+        matrix.rotate(45,0,0,1)
+        var u_xformMatrix = gl.getUniformLocation(shaderProgram,"u_xformMatrix");
+        gl.uniformMatrix4fv(u_xformMatrix,false,matrix.data);
 
 
         gl.clearColor(0.0,0.0,0.0,1.0);
@@ -85,7 +89,7 @@ class Main {
         gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0);
         gl.enableVertexAttribArray(a_Position);
 
-        gl.drawArrays(gl.TRIANGLE_FAN,0,4);
+        gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
 
 

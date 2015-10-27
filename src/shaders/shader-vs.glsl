@@ -1,6 +1,5 @@
 attribute vec4 a_Position;
-
+uniform mat4 u_xformMatrix;
 void main(){
-    gl_Position = a_Position;
-    //gl_PointSize = 60.0;
+    gl_Position = u_xformMatrix * a_Position;
 }
