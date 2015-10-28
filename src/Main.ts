@@ -45,7 +45,7 @@ class Main {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-        Http.loadAll(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl","resource/sky.jpg"],this.initShaders,this);
+        Http.loadAll(["src/shaders/shader-vs.glsl","src/shaders/shader-fs.glsl","resource/test.png"],this.initShaders,this);
     }
 
     private initShaders(resultList:any[]):void{
@@ -63,7 +63,7 @@ class Main {
         gl.useProgram(shaderProgram);
 
         var matrix = new Matrix4();
-        matrix.rotate(45,0,0,-1);
+        //matrix.rotate(45,0,0,-1);
         var u_xformMatrix = gl.getUniformLocation(shaderProgram,"u_xformMatrix");
         gl.uniformMatrix4fv(u_xformMatrix,false,matrix.data);
 
@@ -72,16 +72,21 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         var vertices = new Float32Array([
-            -0.5,0.5,0.0,1.0,
+            -0.5,0.5,0.0,1.7,
             -0.5,-0.5,0.0,0.0,
-            0.5,0.5,1.0,1.0,
-            0.5,-0.5,1.0,0.0
+            0.5,0.5,1.7,1.7,
+            0.5,-0.5,1.7,0.0
         ]);
         var vertexBuffer = gl.createBuffer();
         if(!vertexBuffer){
             console.log('failed to create the buffer object!');
             return;
         }
+
+        gl.enable(gl.BLEND);
+        gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
         gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
         var size = vertices.BYTES_PER_ELEMENT;
@@ -102,8 +107,11 @@ class Main {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D,texture);
-        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
         gl.uniform1i(u_Sampler,0);
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
