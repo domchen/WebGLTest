@@ -28,6 +28,8 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 var gl:WebGLRenderingContext;
+var OFFSCREEN_WIDTH = 512;
+var OFFSCREEN_HEIGHT = 512;
 
 class Main {
 
@@ -40,7 +42,10 @@ class Main {
     private init(canvas:HTMLCanvasElement):void{
         this.horizAspect = canvas.width/canvas.height;
         gl = GL.initWebGL(canvas);
-        gl.viewport(0,0,800,800)
+        gl.enable(gl.BLEND);
+        gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.viewport(0,0,1000,1000);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
@@ -67,25 +72,20 @@ class Main {
         var u_xformMatrix = gl.getUniformLocation(shaderProgram,"u_xformMatrix");
         gl.uniformMatrix4fv(u_xformMatrix,false,matrix.data);
 
-
         gl.clearColor(0.0,0.0,0.0,1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         var vertices = new Float32Array([
-            -0.5,0.5,0.0,1.7,
-            -0.5,-0.5,0.0,0.0,
-            0.5,0.5,1.7,1.7,
-            0.5,-0.5,1.7,0.0
+            -1,1,0.0,1.7,
+            -1,-1,0.0,0.0,
+            1,1,1.7,1.7,
+            1,-1,1.7,0.0
         ]);
         var vertexBuffer = gl.createBuffer();
         if(!vertexBuffer){
             console.log('failed to create the buffer object!');
             return;
         }
-
-        gl.enable(gl.BLEND);
-        gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
         gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
@@ -105,7 +105,6 @@ class Main {
         }
         var u_Sampler = gl.getUniformLocation(shaderProgram,"u_Sampler");
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1);
-        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D,texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -113,7 +112,27 @@ class Main {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
         gl.uniform1i(u_Sampler,0);
+        gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 
+        var fbo = initFramebufferObject();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);              // Change the drawing destination to FBO
+        gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT); // Set a viewport for FBO
+
+        gl.clearColor(0.2, 0.2, 0.4, 1.0); // Set clear color (the color is slightly changed)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  // Clear FBO
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);        // Change the drawing destination to color buffer
+        gl.viewport(0, 0, 1000, 1000);  // Set the size of viewport back to that of <canvas>
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // Clear the color buffer
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, fbo.texture);
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 
     }
@@ -121,4 +140,62 @@ class Main {
 
 }
 
+function initFramebufferObject() {
+    var framebuffer, texture, depthBuffer;
+
+    // Define the error handling function
+    var error = function() {
+        if (framebuffer) gl.deleteFramebuffer(framebuffer);
+        if (texture) gl.deleteTexture(texture);
+        if (depthBuffer) gl.deleteRenderbuffer(depthBuffer);
+        return null;
+    }
+
+    // Create a frame buffer object (FBO)
+    framebuffer = gl.createFramebuffer();
+    if (!framebuffer) {
+        console.log('Failed to create frame buffer object');
+        return error();
+    }
+
+    // Create a texture object and set its size and parameters
+    texture = gl.createTexture(); // Create a texture object
+    if (!texture) {
+        console.log('Failed to create texture object');
+        return error();
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the object to target
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    framebuffer.texture = texture; // Store the texture object
+
+    // Create a renderbuffer object and Set its size and parameters
+    depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object
+    if (!depthBuffer) {
+        console.log('Failed to create renderbuffer object');
+        return error();
+    }
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer); // Bind the object to target
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+
+    // Attach the texture and the renderbuffer object to the FBO
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
+    // Check if FBO is configured correctly
+    var e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (gl.FRAMEBUFFER_COMPLETE !== e) {
+        console.log('Frame buffer object is incomplete: ' + e.toString());
+        return error();
+    }
+
+    // Unbind the buffer object
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+
+    return framebuffer;
+}
 
