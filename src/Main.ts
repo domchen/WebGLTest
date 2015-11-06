@@ -77,9 +77,6 @@ class Main {
         var m = new egret.Matrix();
         m.rotate(Math.PI*0.5);
         matrix.$preMultiplyInto(m,m)
-        //matrix.scale(2,2);
-        //matrix.scale(2,2);
-        //matrix.rotate(45);
         var array = createBufferForImage(0, 0, 256, 256, 0, 0, 300, 300, 1, m);
         var vertices = new Float32Array(array);
         var vertexBuffer = gl.createBuffer();
@@ -91,18 +88,16 @@ class Main {
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         var size = vertices.BYTES_PER_ELEMENT;
-        var length = size * 5;
-        var a_TexCoord = gl.getAttribLocation(shaderProgram, "a_TexCoord");
-        gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, length, 0);
-        gl.enableVertexAttribArray(a_TexCoord);
-
-        var a_Position = gl.getAttribLocation(shaderProgram, "a_Position");
-        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, length, size * 2);
-        gl.enableVertexAttribArray(a_Position);
-
-        var a_Alpha = gl.getAttribLocation(shaderProgram, "a_Alpha");
-        gl.vertexAttribPointer(a_Alpha, 1, gl.FLOAT, false, length, size * 4);
-        gl.enableVertexAttribArray(a_Alpha);
+        var length = size*11;
+        enableAttribute(gl,shaderProgram,"a_TexCoord",2,length,0);
+        enableAttribute(gl,shaderProgram,"a_Position",2,length,size * 2);
+        enableAttribute(gl,shaderProgram,"a_Alpha",1,length,size * 4);
+        enableAttribute(gl,shaderProgram,"a",1,length,size * 5);
+        enableAttribute(gl,shaderProgram,"b",1,length,size * 6);
+        enableAttribute(gl,shaderProgram,"c",1,length,size * 7);
+        enableAttribute(gl,shaderProgram,"d",1,length,size * 8);
+        enableAttribute(gl,shaderProgram,"tx",1,length,size * 9);
+        enableAttribute(gl,shaderProgram,"ty",1,length,size * 10);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -113,26 +108,24 @@ class Main {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
+}
 
+function enableAttribute(gl:WebGLRenderingContext,program:WebGLProgram,name:string,size:number,length:number,offset:number):void{
+    var location = gl.getAttribLocation(program, name);
+    gl.vertexAttribPointer(location, size, gl.FLOAT, false, length, offset);
+    gl.enableVertexAttribArray(location);
 }
 
 function createBufferForImage(sourceX:number, sourceY:number, sourceWidth:number, sourceHeight:number,
                               targetX:number, targetY:number, targetWidth:number, targetHeight:number,
                               alpha:number, m:egret.Matrix):number[] {
-    var vertices = [
-        sourceX, sourceY + sourceHeight, targetX, targetY + targetHeight, alpha,
-        sourceX, sourceY, targetX, targetY, alpha,
-        sourceX + sourceWidth, sourceY + sourceHeight, targetX + targetWidth, targetY + targetHeight, alpha,
-        sourceX + sourceWidth, sourceY, targetX + targetWidth, targetY, alpha
-    ];
     var a = m.a, b = m.b, c = m.c, d = m.d, tx = m.tx, ty = m.ty;
-    for (var i = 0; i < 4; i++) {
-        var j = i * 5;
-        var x = vertices[j + 2];
-        var y = vertices[j + 3];
-        vertices[j + 2] = a * x + c * y + tx;
-        vertices[j + 3] = b * x + d * y + ty;
-    }
+    var vertices = [
+        sourceX, sourceY + sourceHeight, targetX, targetY + targetHeight, alpha, a, b, c, d, tx, ty,
+        sourceX, sourceY, targetX, targetY, alpha, a, b, c, d, tx, ty,
+        sourceX + sourceWidth, sourceY + sourceHeight, targetX + targetWidth, targetY + targetHeight, alpha, a, b, c, d, tx, ty,
+        sourceX + sourceWidth, sourceY, targetX + targetWidth, targetY, alpha, a, b, c, d, tx, ty
+    ];
     return vertices;
 }
 
