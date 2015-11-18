@@ -31,7 +31,8 @@ class GL {
 
     public static initWebGL(canvas:HTMLCanvasElement):WebGLRenderingContext {
         try {
-            var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            //var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            var gl = canvas.getContext("webgl",{stencil:true}) || canvas.getContext("experimental-webgl",{stencil:true});
         }
         catch (e) {
 

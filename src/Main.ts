@@ -42,7 +42,10 @@ class Main {
         SCREEN_WIDTH = canvas.width;
         SCREEN_HEIGHT = canvas.height;
         gl = GL.initWebGL(canvas);
+        var attr = gl.getContextAttributes();
+        console.dir(attr);
         gl.enable(gl.BLEND);
+        gl.enable(gl.STENCIL_TEST);
         gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         Http.loadAll(["src/shaders/shader-vs.glsl", "src/shaders/shader-fs.glsl", "resource/test.png"], this.initShaders, this);
@@ -75,19 +78,12 @@ class Main {
         var matrix = new egret.Matrix();
         matrix.translate(300, 300);
         var m = new egret.Matrix();
-        m.rotate(Math.PI*0.5);
-        matrix.$preMultiplyInto(m,m)
-        var array = createBufferForImage(0, 0, 256, 256, 0, 0, 300, 300, 1, m);
-        var vertices = new Float32Array(array);
-        var vertexBuffer = gl.createBuffer();
-        if (!vertexBuffer) {
-            console.log('failed to create the buffer object!');
-            return;
-        }
+        //m.rotate(Math.PI*0.5);
+        //matrix.$preMultiplyInto(m,m);
 
+        var vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        var size = vertices.BYTES_PER_ELEMENT;
+        var size = Float32Array.BYTES_PER_ELEMENT;
         var length = size*11;
         enableAttribute(gl,shaderProgram,"a_TexCoord",2,length,0);
         enableAttribute(gl,shaderProgram,"a_Position",2,length,size * 2);
@@ -100,11 +96,28 @@ class Main {
         enableAttribute(gl,shaderProgram,"ty",1,length,size * 10);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);
 
         var texture = createTexture(gl, image);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.stencilFunc(gl.NEVER,0x00,0xFF);
+        gl.stencilOp(gl.INCR,gl.KEEP,gl.KEEP);
+
+        var clipArray = createBufferForImage(0, 0, 256, 256, 50, 50, 200, 200, 1, m);
+        var clipVertices = new Float32Array(clipArray);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, clipVertices, gl.STATIC_DRAW);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.stencilFunc(gl.EQUAL,0x1,0xFF);
+        gl.stencilOp(gl.KEEP,gl.KEEP,gl.KEEP);
+
+        var array = createBufferForImage(0, 0, 256, 256, 0, 0, 300, 300, 1, m);
+        var vertices = new Float32Array(array);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
