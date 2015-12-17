@@ -55,6 +55,13 @@ class Main {
             for(var i=0;i<420;i++){
                 player.drawImageToFBO(image,matrix);
                 player.drawImageToFBO(image,matrix);
+                //测试切换FrameBuffer开销
+                //player.drawImageToFBO(image,matrix);
+                //player.drawImageToFBO2(image,matrix);
+                //测试切换context开销
+                //player.drawImageToFBO(image,matrix);
+                //player2.drawImageToFBO(image,matrix);
+
             }
         }
 
