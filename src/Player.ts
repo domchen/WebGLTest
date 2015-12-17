@@ -29,6 +29,8 @@
 
 module egret {
 
+    var count:number  = 1;
+
     export class Player {
 
         private gl:WebGLRenderingContext;
@@ -37,6 +39,8 @@ module egret {
         private SCREEN_WIDTH = 512;
         private SCREEN_HEIGHT = 512;
         private fbo:WebGLFramebuffer;
+        private fbo2:WebGLFramebuffer;
+        private id:number = count++;
 
         public constructor(canvas:HTMLCanvasElement, vertex:string, fragment:string) {
             this.SCREEN_WIDTH = canvas.width;
@@ -87,9 +91,10 @@ module egret {
             enableAttribute(gl, shaderProgram, "ty", 1, length, size * 10);
 
             this.fbo = this.initFramebufferObject();
+            this.fbo2 = this.initFramebufferObject();
         }
 
-        public clear():void{
+        public clear():void {
             var gl = this.gl;
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
@@ -108,11 +113,66 @@ module egret {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, clipVertices, gl.STATIC_DRAW);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            gl.finish();
+        }
+
+        public drawTexture(texture:WebGLTexture,m:egret.Matrix,width:number,height:number):void{
+            var gl = this.gl;
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+
+            var clipArray = createBufferForImage(0, 0, width, height, 0, 0, width, height, 1, m);
+            var clipVertices = new Float32Array(clipArray);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, clipVertices, gl.STATIC_DRAW);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        public drawImageToFBO(image:HTMLImageElement|HTMLCanvasElement, m:egret.Matrix):void {
+            var gl = this.gl;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);              // Change the drawing destination to FBO
+            gl.viewport(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT); // Set a viewport for FBO
+
+            gl.uniform2f(this.u_TextureSize, image.width, image.height);
+            var texture = this.createTexture(gl, image);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+
+            var clipArray = createBufferForImage(0, 0, image.width, image.height, 0, 0, image.width, image.height, 1, m);
+            var clipVertices = new Float32Array(clipArray);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, clipVertices, gl.STATIC_DRAW);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);              // Change the drawing destination to FBO
+            gl.viewport(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT); // Set a viewport for FBO
+
+        }
+        public drawImageToFBO2(image:HTMLImageElement|HTMLCanvasElement, m:egret.Matrix):void {
+            var gl = this.gl;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo2);              // Change the drawing destination to FBO
+            gl.viewport(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT); // Set a viewport for FBO
+
+            gl.uniform2f(this.u_TextureSize, image.width, image.height);
+            var texture = this.createTexture(gl, image);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+
+            var clipArray = createBufferForImage(0, 0, image.width, image.height, 0, 0, image.width, image.height, 1, m);
+            var clipVertices = new Float32Array(clipArray);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, clipVertices, gl.STATIC_DRAW);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);              // Change the drawing destination to FBO
+            gl.viewport(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT); // Set a viewport for FBO
+
         }
 
         private createTexture(gl:WebGLRenderingContext, image:any):WebGLTexture {
-            var texture = image.texture;
+            var texture = image[this.id];
             if (texture) {
                 return texture;
             }
@@ -129,7 +189,7 @@ module egret {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
             gl.bindTexture(gl.TEXTURE_2D, null);
-            image.texture = texture;
+            image[this.id] = texture;
             return texture;
         }
 
@@ -161,7 +221,10 @@ module egret {
             gl.activeTexture(gl.TEXTURE5);
             gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the object to target
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.SCREEN_WIDTH, this.SCREEN_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             framebuffer.texture = texture; // Store the texture object
 
             // Create a renderbuffer object and Set its size and parameters

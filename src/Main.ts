@@ -44,6 +44,7 @@ class Main {
         var image:HTMLImageElement = resultList[2];
 
         var player = new egret.Player(this.canvas, vertexShader, fragmentShader);
+
         var canvas2 = document.createElement("canvas");
         canvas2.width = 400;
         canvas2.height = 400;
@@ -51,9 +52,9 @@ class Main {
         var matrix = new egret.Matrix();
         function onTick():void{
             player.clear();
-            for(var i=0;i<190;i++){
-                player.drawImage(image,matrix);
-                player2.drawImage(image,matrix);
+            for(var i=0;i<420;i++){
+                player.drawImageToFBO(image,matrix);
+                player.drawImageToFBO(image,matrix);
             }
         }
 
